@@ -1,29 +1,71 @@
- # Official python image from Docker Hub
-FROM python
+# ============================
+# Base Image
+# ============================
+FROM python:3.12-slim AS base
 
-# # Installing required system dependencies
-# #RUN apt-get update && apt-get install -y \
-#     wget \
-#     curl \
-#     unzip \
-#     chromium-driver \
-#     && apt-get clean
+# ============================
+# Environment Variables
+# ============================
+ENV PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    PIP_NO_CACHE_DIR=off \
+    CHROME_BIN=/usr/bin/chromium \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
 
-# # The working directory
-# WORKDIR /app
+# ============================
+# Install System Dependencies
+# ============================
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    curl \
+    unzip \
+    gnupg \
+    ca-certificates \
+    fonts-liberation \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxi6 \
+    libxtst6 \
+    xdg-utils \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# # Copy the requirements.txt file first
-# COPY requirements.txt /app/
+# ============================
+# Install Chromium and ChromeDriver
+# ============================
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    chromium-driver \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# # Install Python dependencies
-# RUN pip install --no-cache-dir -r requirements.txt
+# ============================
+# Set Working Directory
+# ============================
+WORKDIR /app
 
-# # Copying scripts into the container
-# COPY . /app
+# ============================
+# Install Python Dependencies
+# ============================
+# Copy only requirements first for caching
+COPY requirements.txt .
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt
 
-# # Environment variables to avoid Chrome headless mode errors
-# ENV DISPLAY=:99
-# ENV PYTHONUNBUFFERED=1
+# ============================
+# Copy Application Code
+# ============================
+COPY . .
 
-# # Command to run the script
-# CMD ["python", "main.py"]
+# ============================
+# Default Command
+# ============================
+CMD ["python", "main.py"]
