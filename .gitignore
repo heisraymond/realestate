@@ -1,5 +1,9 @@
-# .env file
+# Venv folder
+venv/
+
+# Files
 .env
+TODOs.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
